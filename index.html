@@ -4,86 +4,28 @@
   <meta charset="UTF-8">
   <title>MemeChat Login</title>
   <style>
-    body {
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    h1 {
-      font-size: 2em;
-      margin-bottom: 20px;
-    }
-
-    .login-box {
-      background: #222;
-      padding: 30px;
-      border-radius: 15px;
-      box-shadow: 0 0 10px #000;
-      width: 300px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 8px;
-      font-size: 1em;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      background: #333;
-      border: none;
-      border-radius: 8px;
-      color: white;
-      font-size: 1.1em;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background: #555;
-    }
-
-    .error {
-      color: #ff5555;
-      margin-top: 10px;
-      height: 20px;
-      text-align: center;
-    }
+    body { display: flex; justify-content:center; align-items:center; height:100vh; background:#121212; color:white; font-family: Arial; }
+    #loginBox { background:#1f1f1f; padding:30px; border-radius:10px; text-align:center; }
+    input { display:block; margin:10px auto; padding:8px; width:200px; border-radius:5px; border:none; }
+    button { padding:8px 15px; border:none; border-radius:5px; background:#3a3a8f; color:white; cursor:pointer; }
+    button:hover { background:#5555ff; }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h1>MemeChat Login</h1>
-    <input type="text" id="username" placeholder="Username">
-    <input type="password" id="password" placeholder="Password">
+  <div id="loginBox">
+    <h2>MemeChat Login</h2>
+    <input type="text" id="username" placeholder="Username" value="memegodmidas">
+    <input type="password" id="password" placeholder="Password" value="Godsatan1342">
     <button onclick="login()">Login</button>
-    <div class="error" id="error"></div>
   </div>
-
   <script>
+    const accounts = [{ username:"memegodmidas", password:"Godsatan1342" }];
     function login() {
-      const user = document.getElementById("username").value.trim();
-      const pass = document.getElementById("password").value.trim();
-      const errorBox = document.getElementById("error");
-
-      // Basic starter account
-      if (user === "memegodmidas" && pass === "Godsatan1342") {
-        localStorage.setItem("loggedUser", user);
-        window.location.href = "main.html";
-      } else {
-        errorBox.textContent = "Invalid username or password!";
-      }
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value.trim();
+      const found = accounts.find(a=>a.username===u && a.password===p);
+      if(found){ localStorage.setItem("loggedUser", u); window.location.href="main.html"; }
+      else alert("Invalid username or password!");
     }
   </script>
 </body>
