@@ -2,31 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MemeChat Login</title>
-  <style>
-    body { display: flex; justify-content:center; align-items:center; height:100vh; background:#121212; color:white; font-family: Arial; }
-    #loginBox { background:#1f1f1f; padding:30px; border-radius:10px; text-align:center; }
-    input { display:block; margin:10px auto; padding:8px; width:200px; border-radius:5px; border:none; }
-    button { padding:8px 15px; border:none; border-radius:5px; background:#3a3a8f; color:white; cursor:pointer; }
-    button:hover { background:#5555ff; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discord Clone Template</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div id="loginBox">
-    <h2>MemeChat Login</h2>
-    <input type="text" id="username" placeholder="Username" value="memegodmidas">
-    <input type="password" id="password" placeholder="Password" value="Godsatan1342">
-    <button onclick="login()">Login</button>
+  <div class="app">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">MyApp</div>
+      <div class="server-list">
+        <div class="server">H</div>
+        <div class="server">G</div>
+        <div class="server">C</div>
+      </div>
+      <div class="add-server">+</div>
+    </div>
+
+    <!-- Main Chat -->
+    <div class="main-chat">
+      <!-- Channels -->
+      <div class="channels">
+        <div class="channel-category">Text Channels</div>
+        <div class="channel"># general</div>
+        <div class="channel"># memes</div>
+        <div class="channel"># coding</div>
+      </div>
+
+      <!-- Chat Area -->
+      <div class="chat-area">
+        <div class="messages">
+          <div class="message">
+            <img src="assets/avatar.png" class="avatar">
+            <div class="message-content">
+              <div class="username">User1</div>
+              <div class="text">Hello! This is a chat message.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-input">
+          <input type="text" placeholder="Message #general">
+          <button>Send</button>
+        </div>
+      </div>
+
+      <!-- Right Sidebar -->
+      <div class="right-sidebar">
+        <div class="profile">
+          <img src="assets/avatar.png" class="avatar">
+          <div class="username">MyUser</div>
+          <button class="settings-btn">⚙️</button>
+        </div>
+
+        <div class="friends">
+          <div class="friends-title">Friends</div>
+          <div class="friend online">Friend1</div>
+          <div class="friend offline">Friend2</div>
+          <div class="friend online">Friend3</div>
+        </div>
+      </div>
+    </div>
   </div>
-  <script>
-    const accounts = [{ username:"memegodmidas", password:"Godsatan1342" }];
-    function login() {
-      const u = document.getElementById("username").value.trim();
-      const p = document.getElementById("password").value.trim();
-      const found = accounts.find(a=>a.username===u && a.password===p);
-      if(found){ localStorage.setItem("loggedUser", u); window.location.href="main.html"; }
-      else alert("Invalid username or password!");
-    }
-  </script>
+
+<script src="script.js"></script>
 </body>
 </html>
