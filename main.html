@@ -1,530 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>MemeChat - Direct Chat</title>
-  <style>
-    :root {
-      --bg-main: #121212;
-      --bg-side: #1f1f1f;
-      --bg-chat: #2a2a2a;
-      --bg-card: #222;
-      --text-main: #fff;
-      --text-sub: #bbb;
-    }
-
-    body.light {
-      --bg-main: #f2f2f2;
-      --bg-side: #e4e4e4;
-      --bg-chat: #dcdcdc;
-      --bg-card: #fff;
-      --text-main: #000;
-      --text-sub: #444;
-    }
-
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      background: var(--bg-main);
-      color: var(--text-main);
-      font-family: Arial, sans-serif;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    /* Sidebar */
-    #sidebar {
-      width: 260px;
-      background: var(--bg-side);
-      display: flex;
-      flex-direction: column;
-      border-right: 2px solid #000;
-      position: relative;
-    }
-
-    #sidebar header {
-      padding: 15px;
-      background: #252525;
-      text-align: center;
-      font-weight: bold;
-      border-bottom: 2px solid #000;
-    }
-
-    #addFriendBox {
-      display: flex;
-      padding: 10px;
-      gap: 5px;
-    }
-
-    #addFriendBox input {
-      flex: 1;
-      padding: 5px;
-      border: none;
-      border-radius: 5px;
-      background: #333;
-      color: white;
-    }
-
-    #addFriendBox button {
-      background: #3a3a8f;
-      border: none;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-    }
-
-    #friendList {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-    }
-
-    .friend-section {
-      margin-bottom: 15px;
-    }
-
-    .friend-section h3 {
-      font-size: 0.9em;
-      color: var(--text-sub);
-      margin-bottom: 5px;
-    }
-
-    .friend {
-      padding: 8px;
-      margin: 3px 0;
-      background: var(--bg-chat);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .friend:hover {
-      background: #3a3a3a;
-    }
-
-    /* Profile section */
-    #profile {
-      background: #181818;
-      border-top: 2px solid #000;
-      padding: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    #profile img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: #333;
-    }
-
-    #profile-info {
-      flex: 1;
-    }
-
-    #profile-info span {
-      display: block;
-      font-weight: bold;
-    }
-
-    #profile-info small {
-      color: #aaa;
-    }
-
-    #editProfileBtn {
-      background: none;
-      border: none;
-      color: #888;
-      cursor: pointer;
-      font-size: 1.2em;
-    }
-
-    #editProfileBtn:hover {
-      color: white;
-    }
-
-    /* Chat area */
-    #chatArea {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      background: var(--bg-side);
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 0 5px black;
-    }
-
-    #settingsBtn {
-      background: none;
-      border: none;
-      font-size: 1.2em;
-      color: #888;
-      cursor: pointer;
-    }
-
-    #settingsBtn:hover {
-      color: white;
-    }
-
-    #chat-box {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      background: var(--bg-main);
-    }
-
-    .message {
-      max-width: 70%;
-      padding: 10px;
-      border-radius: 10px;
-      background: var(--bg-chat);
-      word-wrap: break-word;
-    }
-
-    .own {
-      background: #3a3a8f;
-      align-self: flex-end;
-    }
-
-    footer {
-      display: flex;
-      padding: 10px;
-      background: var(--bg-side);
-      box-shadow: 0 -2px 5px rgba(0,0,0,0.4);
-    }
-
-    footer input {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: var(--bg-chat);
-      color: var(--text-main);
-      font-size: 1em;
-    }
-
-    footer button {
-      margin-left: 10px;
-      padding: 10px 15px;
-      background: #3a3a8f;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    /* Popups */
-    .popup {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 10;
-    }
-
-    .popup-content {
-      background: var(--bg-card);
-      padding: 20px;
-      border-radius: 12px;
-      width: 300px;
-      text-align: center;
-      box-shadow: 0 0 10px #000;
-    }
-
-    .popup-content img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-    }
-
-    .popup-content h2 {
-      margin: 10px 0 5px;
-    }
-
-    .popup-content p {
-      color: var(--text-sub);
-    }
-
-    .popup-content button {
-      margin-top: 15px;
-      padding: 8px 15px;
-      background: #3a3a8f;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    .popup-content button:hover {
-      background: #5555ff;
-    }
-
-    /* Settings panel */
-    #settingsPanel {
-      position: fixed;
-      top: 0; right: 0;
-      width: 300px;
-      height: 100%;
-      background: var(--bg-card);
-      box-shadow: -3px 0 10px rgba(0,0,0,0.6);
-      display: none;
-      flex-direction: column;
-      padding: 20px;
-      z-index: 20;
-    }
-
-    #settingsPanel h2 {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    #settingsPanel button {
-      margin: 10px 0;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #3a3a8f;
-      color: white;
-      cursor: pointer;
-    }
-
-    #settingsPanel button:hover {
-      background: #5555ff;
-    }
-
-    #closeSettings {
-      background: none;
-      color: var(--text-sub);
-      border: none;
-      font-size: 1.5em;
-      cursor: pointer;
-      align-self: flex-end;
-    }
-
-    /* Edit profile popup inside sidebar */
-    #editProfile {
-      position: absolute;
-      bottom: 70px;
-      left: 10px;
-      right: 10px;
-      background: #222;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #000;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 5;
-    }
-
-    #editProfile input, #editProfile textarea {
-      width: 100%;
-      padding: 8px;
-      border: none;
-      border-radius: 6px;
-      background: #333;
-      color: white;
-      font-size: 0.9em;
-    }
-
-    #editProfile button {
-      padding: 8px;
-      background: #3a3a8f;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    #editProfile button:hover {
-      background: #5555ff;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>MemeChat - Direct Chat</title>
+<style>
+:root { --bg-main:#121212; --bg-side:#1f1f1f; --bg-chat:#2a2a2a; --bg-card:#222; --text-main:#fff; --text-sub:#bbb; }
+body.light { --bg-main:#f2f2f2; --bg-side:#e4e4e4; --bg-chat:#dcdcdc; --bg-card:#fff; --text-main:#000; --text-sub:#444; }
+body { margin:0; height:100vh; display:flex; background:var(--bg-main); color:var(--text-main); font-family:Arial; transition:0.3s; }
+/* Sidebar */
+#sidebar{width:260px;background:var(--bg-side);display:flex;flex-direction:column;border-right:2px solid #000;position:relative;}
+#sidebar header{padding:15px;background:#252525;text-align:center;font-weight:bold;border-bottom:2px solid #000;}
+#addFriendBox{display:flex;padding:10px;gap:5px;}
+#addFriendBox input{flex:1;padding:5px;border:none;border-radius:5px;background:#333;color:white;}
+#addFriendBox button{background:#3a3a8f;border:none;border-radius:5px;color:white;cursor:pointer;}
+#friendList{flex:1;overflow-y:auto;padding:10px;}
+.friend-section{margin-bottom:15px;}
+.friend-section h3{font-size:0.9em;color:var(--text-sub);margin-bottom:5px;}
+.friend{padding:8px;margin:3px 0;background:var(--bg-chat);border-radius:8px;cursor:pointer;transition:0.2s;}
+.friend:hover{background:#3a3a3a;}
+/* Profile section */
+#profile{background:#181818;border-top:2px solid #000;padding:10px;display:flex;align-items:center;gap:10px;}
+#profile img{width:40px;height:40px;border-radius:50%;background:#333;}
+#profile-info{flex:1;}
+#profile-info span{display:block;font-weight:bold;}
+#profile-info small{color:#aaa;}
+#editProfileBtn{background:none;border:none;color:#888;cursor:pointer;font-size:1.2em;}
+#editProfileBtn:hover{color:white;}
+/* Chat area */
+#chatArea{flex:1;display:flex;flex-direction:column;}
+header{background:var(--bg-side);padding:10px 20px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 0 5px black;}
+#settingsBtn{background:none;border:none;font-size:1.2em;color:#888;cursor:pointer;}
+#settingsBtn:hover{color:white;}
+#chat-box{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px;background:var(--bg-main);}
+.message{max-width:70%;padding:10px;border-radius:10px;background:var(--bg-chat);word-wrap:break-word;}
+.own{background:#3a3a8f;align-self:flex-end;}
+footer{display:flex;padding:10px;background:var(--bg-side);box-shadow:0 -2px 5px rgba(0,0,0,0.4);}
+footer input{flex:1;padding:10px;border:none;border-radius:8px;background:var(--bg-chat);color:var(--text-main);font-size:1em;}
+footer button{margin-left:10px;padding:10px 15px;background:#3a3a8f;color:white;border:none;border-radius:8px;cursor:pointer;}
+/* Popups */
+.popup{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:none;justify-content:center;align-items:center;z-index:10;}
+.popup-content{background:var(--bg-card);padding:20px;border-radius:12px;width:300px;text-align:center;box-shadow:0 0 10px #000;}
+.popup-content img{width:80px;height:80px;border-radius:50%;}
+.popup-content h2{margin:10px 0 5px;}
+.popup-content p{color:var(--text-sub);}
+.popup-content button{margin-top:15px;padding:8px 15px;background:#3a3a8f;color:white;border:none;border-radius:8px;cursor:pointer;}
+.popup-content button:hover{background:#5555ff;}
+/* Settings panel */
+#settingsPanel{position:fixed;top:0;right:0;width:300px;height:100%;background:var(--bg-card);box-shadow:-3px 0 10px rgba(0,0,0,0.6);display:none;flex-direction:column;padding:20px;z-index:20;}
+#settingsPanel h2{margin-bottom:20px;text-align:center;}
+#settingsPanel button{margin:10px 0;padding:10px;border:none;border-radius:8px;background:#3a3a8f;color:white;cursor:pointer;}
+#settingsPanel button:hover{background:#5555ff;}
+#closeSettings{background:none;color:var(--text-sub);border:none;font-size:1.5em;cursor:pointer;align-self:flex-end;}
+/* Edit profile popup inside sidebar */
+#editProfile{position:absolute;bottom:70px;left:10px;right:10px;background:#222;padding:15px;border-radius:10px;box-shadow:0 0 10px #000;display:none;flex-direction:column;gap:10px;z-index:5;}
+#editProfile input,#editProfile textarea{width:100%;padding:8px;border:none;border-radius:6px;background:#333;color:white;font-size:0.9em;}
+#editProfile button{padding:8px;background:#3a3a8f;color:white;border:none;border-radius:8px;cursor:pointer;}
+#editProfile button:hover{background:#5555ff;}
+</style>
 </head>
 <body>
-  <div id="sidebar">
-    <header>Friends</header>
-
-    <div id="addFriendBox">
-      <input type="text" id="newFriend" placeholder="Add friend...">
-      <button onclick="addFriend()">+</button>
-    </div>
-
-    <div id="friendList">
-      <div class="friend-section">
-        <h3>⚫ Offline</h3>
-        <div id="offlineFriends"></div>
-      </div>
-    </div>
-
-    <!-- Edit Profile Popup -->
-    <div id="editProfile">
-      <input id="editName" placeholder="Username">
-      <input id="editAvatar" placeholder="Avatar Image URL">
-      <textarea id="editBio" rows="3" placeholder="About Me..."></textarea>
-      <button onclick="saveProfile()">Save</button>
-    </div>
-
-    <!-- Profile Bar -->
-    <div id="profile">
-      <img id="profileAvatar" src="">
-      <div id="profile-info">
-        <span id="profileName"></span>
-        <small id="profileBio"></small>
-      </div>
-      <button id="editProfileBtn" onclick="toggleEdit()">⚙️</button>
+<div id="sidebar">
+  <header>Friends</header>
+  <div id="addFriendBox">
+    <input type="text" id="newFriend" placeholder="Add friend...">
+    <button onclick="addFriend()">+</button>
+  </div>
+  <div id="friendList">
+    <div class="friend-section">
+      <h3>⚫ Offline</h3>
+      <div id="offlineFriends"></div>
     </div>
   </div>
-
-  <div id="chatArea">
-    <header>
-      <div id="chatWith">Select a friend</div>
-      <button id="settingsBtn" onclick="toggleSettings()">⚙️</button>
-    </header>
-
-    <div id="chat-box"></div>
-
-    <footer>
-      <input type="text" id="messageInput" placeholder="Type a message..." disabled onkeypress="if(event.key==='Enter') sendMessage()">
-      <button onclick="sendMessage()">Send</button>
-    </footer>
+  <!-- Edit Profile Popup -->
+  <div id="editProfile">
+    <input id="editName" placeholder="Username">
+    <input id="editAvatar" placeholder="Avatar Image URL">
+    <textarea id="editBio" rows="3" placeholder="About Me..."></textarea>
+    <button onclick="saveProfile()">Save</button>
   </div>
-
-  <!-- Friend Profile Popup -->
-  <div id="friendPopup" class="popup">
-    <div class="popup-content">
-      <img id="popupAvatar">
-      <h2 id="popupName"></h2>
-      <p id="popupBio"></p>
-      <button onclick="closeFriendPopup()">Close</button>
+  <!-- Profile Bar -->
+  <div id="profile">
+    <img id="profileAvatar" src="">
+    <div id="profile-info">
+      <span id="profileName"></span>
+      <small id="profileBio"></small>
     </div>
+    <button id="editProfileBtn" onclick="toggleEdit()">⚙️</button>
   </div>
-
-  <!-- Settings Panel -->
-  <div id="settingsPanel">
-    <button id="closeSettings" onclick="toggleSettings()">✖</button>
-    <h2>Settings</h2>
-    <button onclick="toggleTheme()">Toggle Theme</button>
-    <button onclick="clearData()">Clear All Data</button>
-    <button onclick="logout()">Logout</button>
+</div>
+<div id="chatArea">
+  <header>
+    <div id="chatWith">Select a friend</div>
+    <button id="settingsBtn" onclick="toggleSettings()">⚙️</button>
+  </header>
+  <div id="chat-box"></div>
+  <footer>
+    <input type="text" id="messageInput" placeholder="Type a message..." disabled onkeypress="if(event.key==='Enter') sendMessage()">
+    <button onclick="sendMessage()">Send</button>
+  </footer>
+</div>
+<!-- Friend Profile Popup -->
+<div id="friendPopup" class="popup">
+  <div class="popup-content">
+    <img id="popupAvatar">
+    <h2 id="popupName"></h2>
+    <p id="popupBio"></p>
+    <button onclick="closeFriendPopup()">Close</button>
   </div>
+</div>
+<!-- Settings Panel -->
+<div id="settingsPanel">
+  <button id="closeSettings" onclick="toggleSettings()">✖</button>
+  <h2>Settings</h2>
+  <button onclick="toggleTheme()">Toggle Theme</button>
+  <button onclick="clearData()">Clear All Data</button>
+  <button onclick="logout()">Logout</button>
+</div>
+<script>
+const user = localStorage.getItem("loggedUser");
+if(!user) window.location.href="index.html";
 
-  <script>
-    const user = localStorage.getItem("loggedUser");
-    if (!user) window.location.href = "index.html";
+let friends = JSON.parse(localStorage.getItem("friends")||"[]");
+let chats = JSON.parse(localStorage.getItem("chats")||"{}");
+let profile = JSON.parse(localStorage.getItem("profile")||"{}");
+let currentChat=null;
+let lightMode=localStorage.getItem("theme")==="light";
+if(lightMode) document.body.classList.add("light");
 
-    let friends = JSON.parse(localStorage.getItem("friends") || "[]");
-    let chats = JSON.parse(localStorage.getItem("chats") || "{}");
-    let profile = JSON.parse(localStorage.getItem("profile") || "{}");
-    let currentChat = null;
-    let lightMode = localStorage.getItem("theme") === "light";
+// PROFILE
+const defaultProfile={name:user,avatar:"https://cdn-icons-png.flaticon.com/512/149/149071.png",bio:"No bio yet."};
+profile=Object.assign(defaultProfile,profile);
+updateProfileDisplay();
+function updateProfileDisplay(){
+  document.getElementById("profileAvatar").src=profile.avatar;
+  document.getElementById("profileName").textContent=profile.name;
+  document.getElementById("profileBio").textContent=profile.bio;
+}
+function toggleEdit(){
+  const box=document.getElementById("editProfile");
+  box.style.display=box.style.display==="flex"?"none":"flex";
+  document.getElementById("editName").value=profile.name;
+  document.getElementById("editAvatar").value=profile.avatar;
+  document.getElementById("editBio").value=profile.bio;
+}
+function saveProfile(){
+  profile.name=document.getElementById("editName").value.trim()||profile.name;
+  profile.avatar=document.getElementById("editAvatar").value.trim()||profile.avatar;
+  profile.bio=document.getElementById("editBio").value.trim()||profile.bio;
+  localStorage.setItem("profile",JSON.stringify(profile));
+  updateProfileDisplay();
+  document.getElementById("editProfile").style.display="none";
+}
 
-    if (lightMode) document.body.classList.add("light");
+// FRIENDS
+function addFriend(){
+  const name=document.getElementById("newFriend").value.trim();
+  if(!name)return;
+  if(friends.some(f=>f.name===name))return alert("Already friends!");
+  const newFriend={name,avatar:"https://cdn-icons-png.flaticon.com/512/149/149071.png",bio:"This is "+name+"'s bio."};
+  friends.push(newFriend);
+  localStorage.setItem("friends",JSON.stringify(friends));
+  renderFriends();
+  document.getElementById("newFriend").value="";
+}
+function renderFriends(){
+  const container=document.getElementById("offlineFriends");
+  container.innerHTML="";
+  friends.forEach(f=>{
+    const div=document.createElement("div");
+    div.classList.add("friend");
+    div.textContent=f.name;
+    div.onclick=()=>openFriendChat(f.name);
+    container.appendChild(div);
+  });
+}
+function openFriendPopup(name){
+  const friend=friends.find(f=>f.name===name);
+  if(!friend)return;
+  document.getElementById("popupName").textContent=friend.name;
+  document.getElementById("popupAvatar").src=friend.avatar;
+  document.getElementById("popupBio").textContent=friend.bio;
+  document.getElementById("friendPopup").style.display="flex";
+}
+function closeFriendPopup(){document.getElementById("friendPopup").style.display="none";}
 
-    // --- PROFILE ---
-    const defaultProfile = { name: user, avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png", bio: "No bio yet." };
-    profile = Object.assign(defaultProfile, profile);
-    updateProfileDisplay();
+// CHAT
+function openFriendChat(name){
+  currentChat=name;
+  document.getElementById("chatWith").textContent=name;
+  document.getElementById("messageInput").disabled=false;
+  renderMessages();
+}
+function renderMessages(){
+  if(!currentChat) return;
+  const chatBox=document.getElementById("chat-box");
+  chatBox.innerHTML="";
+  if(!chats[currentChat]) chats[currentChat]=[];
+  chats[currentChat].forEach(msg=>{
+    const div=document.createElement("div");
+    div.classList.add("message");
+    if(msg.sender===user) div.classList.add("own");
+    div.textContent=msg.content;
+    chatBox.appendChild(div);
+  });
+  chatBox.scrollTop=chatBox.scrollHeight;
+}
+function sendMessage(){
+  const input=document.getElementById("messageInput");
+  const text=input.value.trim();
+  if(!text||!currentChat) return;
+  if(!chats[currentChat]) chats[currentChat]=[];
+  chats[currentChat].push({sender:user,content:text,timestamp:Date.now()});
+  localStorage.setItem("chats",JSON.stringify(chats));
+  input.value="";
+  renderMessages();
+  // Optional: simulate friend reply
+  setTimeout(()=>{
+    const friendReply="Hey! 👋";
+    chats[currentChat].push({sender:currentChat,content:friendReply,timestamp:Date.now()});
+    localStorage.setItem("chats",JSON.stringify(chats));
+    renderMessages();
+  },1000);
+}
 
-    function updateProfileDisplay() {
-      document.getElementById("profileAvatar").src = profile.avatar;
-      document.getElementById("profileName").textContent = profile.name;
-      document.getElementById("profileBio").textContent = profile.bio;
-    }
+// SETTINGS
+function toggleSettings(){const panel=document.getElementById("settingsPanel");panel.style.display=panel.style.display==="flex"?"none":"flex";}
+function toggleTheme(){lightMode=!lightMode;document.body.classList.toggle("light");localStorage.setItem("theme",lightMode?"light":"dark");}
+function clearData(){if(confirm("Clear all MemeChat data?")){localStorage.clear();window.location.reload();}}
+function logout(){localStorage.removeItem("loggedUser");window.location.href="index.html";}
 
-    function toggleEdit() {
-      const box = document.getElementById("editProfile");
-      box.style.display = box.style.display === "flex" ? "none" : "flex";
-      document.getElementById("editName").value = profile.name;
-      document.getElementById("editAvatar").value = profile.avatar;
-      document.getElementById("editBio").value = profile.bio;
-    }
-
-    function saveProfile() {
-      profile.name = document.getElementById("editName").value.trim() || profile.name;
-      profile.avatar = document.getElementById("editAvatar").value.trim() || profile.avatar;
-      profile.bio = document.getElementById("editBio").value.trim() || profile.bio;
-      localStorage.setItem("profile", JSON.stringify(profile));
-      updateProfileDisplay();
-      document.getElementById("editProfile").style.display = "none";
-    }
-
-    // --- FRIENDS ---
-    function addFriend() {
-      const name = document.getElementById("newFriend").value.trim();
-      if (!name) return;
-      if (friends.some(f => f.name === name)) return alert("Already friends!");
-
-      const newFriend = { name, avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png", bio: "This is " + name + "'s bio." };
-      friends.push(newFriend);
-      localStorage.setItem("friends", JSON.stringify(friends));
-      renderFriends();
-      document.getElementById("newFriend").value = "";
-    }
-
-    function renderFriends() {
-      const container = document.getElementById("offlineFriends");
-      container.innerHTML = "";
-      friends.forEach(f => {
-        const div = document.createElement("div");
-        div.classList.add("friend");
-        div.textContent = f.name;
-        div.onclick = () => openFriendPopup(f.name);
-        container.appendChild(div);
-      });
-    }
-
-    function openFriendPopup(name) {
-      const friend = friends.find(f => f.name === name);
-      if (!friend) return;
-      document.getElementById("popupName").textContent = friend.name;
-      document.getElementById("popupAvatar").src = friend.avatar;
-      document.getElementById("popupBio").textContent = friend.bio;
-      document.getElementById("friendPopup").style.display = "flex";
-    }
-
-    function closeFriendPopup() {
-      document.getElementById("friendPopup").style.display = "none";
-    }
-
-    // --- SETTINGS ---
-    function toggleSettings() {
-      const panel = document.getElementById("settingsPanel");
-      panel.style.display = panel.style.display === "flex" ? "none" : "flex";
-    }
-
-    function toggleTheme() {
-      lightMode = !lightMode;
-      document.body.classList.toggle("light");
-      localStorage.setItem("theme", lightMode ? "light" : "dark");
-    }
-
-    function clearData() {
-      if (confirm("Clear all MemeChat data?")) {
-        localStorage.clear();
-        window.location.reload();
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem("loggedUser");
-      window.location.href = "index.html";
-    }
-
-    renderFriends();
-  </script>
+renderFriends();
+</script>
 </body>
 </html>
