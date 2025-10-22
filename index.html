@@ -51,9 +51,9 @@
       <!-- Right Sidebar -->
       <div class="right-sidebar">
         <div class="profile">
-          <img src="assets/avatar.png" class="avatar">
+          <img src="assets/avatar.png" class="avatar" id="settings-trigger">
           <div class="username">MyUser</div>
-          <button class="settings-btn">⚙️</button>
+          <button class="settings-btn" id="settings-trigger-btn">⚙️</button>
         </div>
 
         <div class="friends">
@@ -76,6 +76,39 @@
       <div class="actions">
         <button class="message-btn">Message</button>
         <button class="friend-btn">Add Friend</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="settings-modal">
+    <div class="settings-card">
+      <span class="close-settings">&times;</span>
+      <h2>Settings</h2>
+      <label>
+        Username:
+        <input type="text" id="username-input" value="MyUser">
+      </label>
+      <label>
+        Status:
+        <select id="status-input">
+          <option value="Online">Online</option>
+          <option value="Idle">Idle</option>
+          <option value="Do Not Disturb">Do Not Disturb</option>
+          <option value="Invisible">Invisible</option>
+        </select>
+      </label>
+      <button id="save-settings">Save</button>
+    </div>
+  </div>
+
+  <!-- Call Modal -->
+  <div id="call-modal" class="call-modal">
+    <div class="call-card">
+      <div class="call-user">Calling User...</div>
+      <div class="call-buttons">
+        <button id="mute-btn">Mute</button>
+        <button id="end-call-btn">End Call</button>
       </div>
     </div>
   </div>
