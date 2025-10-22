@@ -60,6 +60,15 @@ io.on('connection', socket => {
         io.emit('receive-message', { username, text: msg });
     });
 
+    socket.on('update-status', status => {
+        const username = connectedUsers[socket.id];
+        if(username && users[username]){
+            users[username].status = status;
+            fs.writeJsonSync(USERS_FILE, users);
+            io.emit('update-users', Object.keys(connectedUsers));
+        }
+    });
+
     socket.on('disconnect', ()=>{
         delete connectedUsers[socket.id];
         io.emit('update-users', Object.keys(connectedUsers));
