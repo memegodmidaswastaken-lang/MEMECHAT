@@ -8,10 +8,85 @@
       margin: 0;
       height: 100vh;
       display: flex;
-      flex-direction: column;
       background: #121212;
       color: white;
       font-family: Arial, sans-serif;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 250px;
+      background: #1f1f1f;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid #000;
+    }
+
+    #sidebar header {
+      padding: 15px;
+      background: #252525;
+      text-align: center;
+      font-weight: bold;
+      border-bottom: 2px solid #000;
+    }
+
+    #addFriendBox {
+      display: flex;
+      padding: 10px;
+      gap: 5px;
+    }
+
+    #addFriendBox input {
+      flex: 1;
+      padding: 5px;
+      border: none;
+      border-radius: 5px;
+      background: #333;
+      color: white;
+    }
+
+    #addFriendBox button {
+      background: #3a3a8f;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    #friendList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .friend-section {
+      margin-bottom: 15px;
+    }
+
+    .friend-section h3 {
+      font-size: 0.9em;
+      color: #bbb;
+      margin-bottom: 5px;
+    }
+
+    .friend {
+      padding: 8px;
+      margin: 3px 0;
+      background: #2a2a2a;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .friend:hover {
+      background: #3a3a3a;
+    }
+
+    /* Chat area */
+    #chatArea {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     header {
@@ -52,7 +127,7 @@
       box-shadow: 0 -2px 5px rgba(0,0,0,0.4);
     }
 
-    input {
+    footer input {
       flex: 1;
       padding: 10px;
       border: none;
@@ -62,7 +137,7 @@
       font-size: 1em;
     }
 
-    button {
+    footer button {
       margin-left: 10px;
       padding: 10px 15px;
       background: #3a3a8f;
@@ -73,56 +148,117 @@
       transition: 0.2s;
     }
 
-    button:hover {
+    footer button:hover {
       background: #5555ff;
     }
   </style>
 </head>
 <body>
-  <header>
-    <div id="user-info"></div>
-    <button onclick="logout()">Logout</button>
-  </header>
+  <div id="sidebar">
+    <header>Friends</header>
 
-  <div id="chat-box"></div>
+    <div id="addFriendBox">
+      <input type="text" id="newFriend" placeholder="Add friend...">
+      <button onclick="addFriend()">+</button>
+    </div>
 
-  <footer>
-    <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
-    <button onclick="sendMessage()">Send</button>
-  </footer>
+    <div id="friendList">
+      <div class="friend-section">
+        <h3>🟢 Online</h3>
+        <div id="onlineFriends"></div>
+      </div>
+      <div class="friend-section">
+        <h3>⚫ Offline</h3>
+        <div id="offlineFriends"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chatArea">
+    <header>
+      <div id="chatWith">Select a friend to chat</div>
+      <button onclick="logout()">Logout</button>
+    </header>
+
+    <div id="chat-box"></div>
+
+    <footer>
+      <input type="text" id="messageInput" placeholder="Type a message..." disabled onkeypress="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()">Send</button>
+    </footer>
+  </div>
 
   <script>
     const user = localStorage.getItem("loggedUser");
-    if (!user) {
-      window.location.href = "index.html";
-    } else {
-      document.getElementById("user-info").textContent = "Logged in as: " + user;
+    if (!user) window.location.href = "index.html";
+
+    // Simple friend system (local)
+    let friends = JSON.parse(localStorage.getItem("friends") || "[]");
+    let chats = JSON.parse(localStorage.getItem("chats") || "{}");
+    let currentChat = null;
+
+    const onlineFriends = [];
+    const offlineFriends = [];
+
+    // For now, we’ll assume the user is always online and friends are offline until added
+    function renderFriends() {
+      const onlineDiv = document.getElementById("onlineFriends");
+      const offlineDiv = document.getElementById("offlineFriends");
+      onlineDiv.innerHTML = "";
+      offlineDiv.innerHTML = "";
+
+      friends.forEach(f => {
+        const div = document.createElement("div");
+        div.classList.add("friend");
+        div.textContent = f;
+        div.onclick = () => openChat(f);
+        offlineDiv.appendChild(div);
+      });
     }
 
-    const chatBox = document.getElementById("chat-box");
-    let messages = JSON.parse(localStorage.getItem("messages") || "[]");
+    function addFriend() {
+      const name = document.getElementById("newFriend").value.trim();
+      if (!name) return;
+      if (friends.includes(name)) return alert("Already friends!");
+      friends.push(name);
+      localStorage.setItem("friends", JSON.stringify(friends));
+      document.getElementById("newFriend").value = "";
+      renderFriends();
+    }
 
-    function renderMessages() {
-      chatBox.innerHTML = "";
-      messages.forEach(msg => {
+    function openChat(friend) {
+      currentChat = friend;
+      document.getElementById("chatWith").textContent = "Chatting with " + friend;
+      document.getElementById("messageInput").disabled = false;
+      renderChat();
+    }
+
+    function renderChat() {
+      const box = document.getElementById("chat-box");
+      box.innerHTML = "";
+      const key = `${user}_${currentChat}`;
+      const msgs = chats[key] || [];
+      msgs.forEach(msg => {
         const div = document.createElement("div");
         div.classList.add("message");
         if (msg.user === user) div.classList.add("own");
         div.textContent = `${msg.user}: ${msg.text}`;
-        chatBox.appendChild(div);
+        box.appendChild(div);
       });
-      chatBox.scrollTop = chatBox.scrollHeight;
+      box.scrollTop = box.scrollHeight;
     }
 
     function sendMessage() {
+      if (!currentChat) return;
       const input = document.getElementById("messageInput");
       const text = input.value.trim();
       if (!text) return;
-      const msg = { user, text, time: Date.now() };
-      messages.push(msg);
-      localStorage.setItem("messages", JSON.stringify(messages));
+      const key = `${user}_${currentChat}`;
+      if (!chats[key]) chats[key] = [];
+      chats[key].push({ user, text, time: Date.now() });
+      localStorage.setItem("chats", JSON.stringify(chats));
       input.value = "";
-      renderMessages();
+      renderChat();
     }
 
     function logout() {
@@ -130,7 +266,7 @@
       window.location.href = "index.html";
     }
 
-    renderMessages();
+    renderFriends();
   </script>
 </body>
 </html>
