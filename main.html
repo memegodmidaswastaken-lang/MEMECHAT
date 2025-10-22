@@ -15,11 +15,12 @@
 
     /* Sidebar */
     #sidebar {
-      width: 250px;
+      width: 260px;
       background: #1f1f1f;
       display: flex;
       flex-direction: column;
       border-right: 2px solid #000;
+      position: relative;
     }
 
     #sidebar header {
@@ -80,6 +81,87 @@
 
     .friend:hover {
       background: #3a3a3a;
+    }
+
+    /* Profile section */
+    #profile {
+      background: #181818;
+      border-top: 2px solid #000;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #profile img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #333;
+    }
+
+    #profile-info {
+      flex: 1;
+    }
+
+    #profile-info span {
+      display: block;
+      font-weight: bold;
+    }
+
+    #profile-info small {
+      color: #aaa;
+    }
+
+    #editProfileBtn {
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 1.2em;
+    }
+
+    #editProfileBtn:hover {
+      color: white;
+    }
+
+    /* Edit profile popup */
+    #editProfile {
+      position: absolute;
+      bottom: 70px;
+      left: 10px;
+      right: 10px;
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 5;
+    }
+
+    #editProfile input, #editProfile textarea {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: white;
+      font-size: 0.9em;
+    }
+
+    #editProfile button {
+      padding: 8px;
+      background: #3a3a8f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #editProfile button:hover {
+      background: #5555ff;
     }
 
     /* Chat area */
@@ -172,6 +254,24 @@
         <div id="offlineFriends"></div>
       </div>
     </div>
+
+    <!-- Edit Profile Popup -->
+    <div id="editProfile">
+      <input id="editName" placeholder="Username">
+      <input id="editAvatar" placeholder="Avatar Image URL">
+      <textarea id="editBio" rows="3" placeholder="About Me..."></textarea>
+      <button onclick="saveProfile()">Save</button>
+    </div>
+
+    <!-- Profile Bar -->
+    <div id="profile">
+      <img id="profileAvatar" src="">
+      <div id="profile-info">
+        <span id="profileName"></span>
+        <small id="profileBio"></small>
+      </div>
+      <button id="editProfileBtn" onclick="toggleEdit()">⚙️</button>
+    </div>
   </div>
 
   <div id="chatArea">
@@ -192,21 +292,47 @@
     const user = localStorage.getItem("loggedUser");
     if (!user) window.location.href = "index.html";
 
-    // Simple friend system (local)
     let friends = JSON.parse(localStorage.getItem("friends") || "[]");
     let chats = JSON.parse(localStorage.getItem("chats") || "{}");
+    let profile = JSON.parse(localStorage.getItem("profile") || "{}");
     let currentChat = null;
 
-    const onlineFriends = [];
-    const offlineFriends = [];
+    // --- PROFILE ---
+    const defaultProfile = {
+      name: user,
+      avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+      bio: "No bio yet."
+    };
+    profile = Object.assign(defaultProfile, profile);
+    updateProfileDisplay();
 
-    // For now, we’ll assume the user is always online and friends are offline until added
+    function updateProfileDisplay() {
+      document.getElementById("profileAvatar").src = profile.avatar;
+      document.getElementById("profileName").textContent = profile.name;
+      document.getElementById("profileBio").textContent = profile.bio;
+    }
+
+    function toggleEdit() {
+      const box = document.getElementById("editProfile");
+      box.style.display = box.style.display === "flex" ? "none" : "flex";
+      document.getElementById("editName").value = profile.name;
+      document.getElementById("editAvatar").value = profile.avatar;
+      document.getElementById("editBio").value = profile.bio;
+    }
+
+    function saveProfile() {
+      profile.name = document.getElementById("editName").value.trim() || profile.name;
+      profile.avatar = document.getElementById("editAvatar").value.trim() || profile.avatar;
+      profile.bio = document.getElementById("editBio").value.trim() || profile.bio;
+      localStorage.setItem("profile", JSON.stringify(profile));
+      updateProfileDisplay();
+      document.getElementById("editProfile").style.display = "none";
+    }
+
+    // --- FRIENDS ---
     function renderFriends() {
-      const onlineDiv = document.getElementById("onlineFriends");
       const offlineDiv = document.getElementById("offlineFriends");
-      onlineDiv.innerHTML = "";
       offlineDiv.innerHTML = "";
-
       friends.forEach(f => {
         const div = document.createElement("div");
         div.classList.add("friend");
@@ -226,6 +352,7 @@
       renderFriends();
     }
 
+    // --- CHAT ---
     function openChat(friend) {
       currentChat = friend;
       document.getElementById("chatWith").textContent = "Chatting with " + friend;
@@ -255,7 +382,7 @@
       if (!text) return;
       const key = `${user}_${currentChat}`;
       if (!chats[key]) chats[key] = [];
-      chats[key].push({ user, text, time: Date.now() });
+      chats[key].push({ user: profile.name, text, time: Date.now() });
       localStorage.setItem("chats", JSON.stringify(chats));
       input.value = "";
       renderChat();
