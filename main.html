@@ -313,6 +313,45 @@
       cursor: pointer;
       align-self: flex-end;
     }
+
+    /* Edit profile popup inside sidebar */
+    #editProfile {
+      position: absolute;
+      bottom: 70px;
+      left: 10px;
+      right: 10px;
+      background: #222;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 5;
+    }
+
+    #editProfile input, #editProfile textarea {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: white;
+      font-size: 0.9em;
+    }
+
+    #editProfile button {
+      padding: 8px;
+      background: #3a3a8f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #editProfile button:hover {
+      background: #5555ff;
+    }
   </style>
 </head>
 <body>
@@ -326,17 +365,22 @@
 
     <div id="friendList">
       <div class="friend-section">
-        <h3>🟢 Online</h3>
-        <div id="onlineFriends"></div>
-      </div>
-      <div class="friend-section">
         <h3>⚫ Offline</h3>
         <div id="offlineFriends"></div>
       </div>
     </div>
 
+    <!-- Edit Profile Popup -->
+    <div id="editProfile">
+      <input id="editName" placeholder="Username">
+      <input id="editAvatar" placeholder="Avatar Image URL">
+      <textarea id="editBio" rows="3" placeholder="About Me..."></textarea>
+      <button onclick="saveProfile()">Save</button>
+    </div>
+
+    <!-- Profile Bar -->
     <div id="profile">
-      <img id="profileAvatar">
+      <img id="profileAvatar" src="">
       <div id="profile-info">
         <span id="profileName"></span>
         <small id="profileBio"></small>
@@ -354,7 +398,7 @@
     <div id="chat-box"></div>
 
     <footer>
-      <input type="text" id="messageInput" placeholder="Type..." disabled onkeypress="if(event.key==='Enter') sendMessage()">
+      <input type="text" id="messageInput" placeholder="Type a message..." disabled onkeypress="if(event.key==='Enter') sendMessage()">
       <button onclick="sendMessage()">Send</button>
     </footer>
   </div>
@@ -390,25 +434,42 @@
 
     if (lightMode) document.body.classList.add("light");
 
-    const defaultProfile = {
-      name: user,
-      avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-      bio: "No bio yet."
-    };
+    // --- PROFILE ---
+    const defaultProfile = { name: user, avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png", bio: "No bio yet." };
     profile = Object.assign(defaultProfile, profile);
-    updateProfile();
+    updateProfileDisplay();
 
-    function updateProfile() {
+    function updateProfileDisplay() {
       document.getElementById("profileAvatar").src = profile.avatar;
       document.getElementById("profileName").textContent = profile.name;
       document.getElementById("profileBio").textContent = profile.bio;
     }
 
+    function toggleEdit() {
+      const box = document.getElementById("editProfile");
+      box.style.display = box.style.display === "flex" ? "none" : "flex";
+      document.getElementById("editName").value = profile.name;
+      document.getElementById("editAvatar").value = profile.avatar;
+      document.getElementById("editBio").value = profile.bio;
+    }
+
+    function saveProfile() {
+      profile.name = document.getElementById("editName").value.trim() || profile.name;
+      profile.avatar = document.getElementById("editAvatar").value.trim() || profile.avatar;
+      profile.bio = document.getElementById("editBio").value.trim() || profile.bio;
+      localStorage.setItem("profile", JSON.stringify(profile));
+      updateProfileDisplay();
+      document.getElementById("editProfile").style.display = "none";
+    }
+
+    // --- FRIENDS ---
     function addFriend() {
       const name = document.getElementById("newFriend").value.trim();
       if (!name) return;
-      if (friends.includes(name)) return alert("Already friends!");
-      friends.push(name);
+      if (friends.some(f => f.name === name)) return alert("Already friends!");
+
+      const newFriend = { name, avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png", bio: "This is " + name + "'s bio." };
+      friends.push(newFriend);
       localStorage.setItem("friends", JSON.stringify(friends));
       renderFriends();
       document.getElementById("newFriend").value = "";
@@ -420,16 +481,18 @@
       friends.forEach(f => {
         const div = document.createElement("div");
         div.classList.add("friend");
-        div.textContent = f;
-        div.onclick = () => openFriendPopup(f);
+        div.textContent = f.name;
+        div.onclick = () => openFriendPopup(f.name);
         container.appendChild(div);
       });
     }
 
     function openFriendPopup(name) {
-      document.getElementById("popupName").textContent = name;
-      document.getElementById("popupAvatar").src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-      document.getElementById("popupBio").textContent = "This is " + name + "'s profile.";
+      const friend = friends.find(f => f.name === name);
+      if (!friend) return;
+      document.getElementById("popupName").textContent = friend.name;
+      document.getElementById("popupAvatar").src = friend.avatar;
+      document.getElementById("popupBio").textContent = friend.bio;
       document.getElementById("friendPopup").style.display = "flex";
     }
 
@@ -437,6 +500,7 @@
       document.getElementById("friendPopup").style.display = "none";
     }
 
+    // --- SETTINGS ---
     function toggleSettings() {
       const panel = document.getElementById("settingsPanel");
       panel.style.display = panel.style.display === "flex" ? "none" : "flex";
@@ -449,7 +513,7 @@
     }
 
     function clearData() {
-      if (confirm("Are you sure you want to clear all MemeChat data?")) {
+      if (confirm("Clear all MemeChat data?")) {
         localStorage.clear();
         window.location.reload();
       }
