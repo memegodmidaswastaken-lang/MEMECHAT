@@ -1,43 +1,69 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+const fs = require('fs-extra');
+const path = require('path');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-let users = {}; // { socketId: {username, status} }
+const USERS_FILE = path.join(__dirname, 'users.json');
 
-io.on('connection', socket => {
-  console.log('User connected:', socket.id);
+// Load users
+let users = {};
+if(fs.existsSync(USERS_FILE)){
+    users = fs.readJsonSync(USERS_FILE);
+}else{
+    fs.writeJsonSync(USERS_FILE, users);
+}
 
-  // New user joins
-  socket.on('new-user', (username) => {
-    users[socket.id] = { username, status: 'Online' };
-    io.emit('update-users', users);
-  });
+// Serve login page
+app.get('/', (req, res) => res.sendFile(__dirname + '/public/login.html'));
 
-  // Chat message
-  socket.on('send-message', (msg) => {
-    const user = users[socket.id];
-    if(user) {
-      io.emit('receive-message', { username: user.username, text: msg });
+// Handle login/register
+app.post('/login', (req, res) => {
+    const { username, password, action } = req.body;
+    if(action === 'register'){
+        if(users[username]) return res.send('Username exists!');
+        users[username] = { password, status: 'Online' };
+        fs.writeJsonSync(USERS_FILE, users);
+        return res.redirect('/chat?user='+username);
+    } else if(action === 'login'){
+        if(!users[username] || users[username].password !== password) return res.send('Invalid credentials!');
+        users[username].status = 'Online';
+        fs.writeJsonSync(USERS_FILE, users);
+        return res.redirect('/chat?user='+username);
     }
-  });
-
-  // Update status
-  socket.on('update-status', (status) => {
-    if(users[socket.id]) {
-      users[socket.id].status = status;
-      io.emit('update-users', users);
-    }
-  });
-
-  // Disconnect
-  socket.on('disconnect', () => {
-    delete users[socket.id];
-    io.emit('update-users', users);
-    console.log('User disconnected:', socket.id);
-  });
 });
 
-http.listen(3000, () => console.log('Server running on http://localhost:3000'));
+// Serve chat page
+app.get('/chat', (req,res)=>{
+    if(!req.query.user || !users[req.query.user]) return res.redirect('/');
+    res.sendFile(__dirname + '/public/index.html');
+});
+
+// Socket.io real-time
+let connectedUsers = {}; // { socketId: username }
+
+io.on('connection', socket => {
+    console.log('Connected:', socket.id);
+
+    socket.on('join', username => {
+        connectedUsers[socket.id] = username;
+        io.emit('update-users', Object.keys(connectedUsers));
+    });
+
+    socket.on('send-message', msg => {
+        const username = connectedUsers[socket.id];
+        io.emit('receive-message', { username, text: msg });
+    });
+
+    socket.on('disconnect', ()=>{
+        delete connectedUsers[socket.id];
+        io.emit('update-users', Object.keys(connectedUsers));
+    });
+});
+
+http.listen(3000, ()=> console.log('Server running on http://localhost:3000'));
