@@ -29,7 +29,7 @@ body { background: #36393f; color: #fff; }
 /* Chat Area */
 .chat-area { flex: 1; display: flex; flex-direction: column; background: #36393f; }
 .messages { flex: 1; padding: 10px; overflow-y: auto; }
-.message { display: flex; margin-bottom: 10px; }
+.message { display: flex; margin-bottom: 10px; cursor: pointer; }
 .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; }
 .message-content { display: flex; flex-direction: column; }
 .username { font-weight: bold; font-size: 14px; }
@@ -43,6 +43,49 @@ body { background: #36393f; color: #fff; }
 .profile { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
 .settings-btn { margin-left: auto; cursor: pointer; background: none; border: none; color: white; font-size: 18px; }
 .friends-title { font-size: 12px; text-transform: uppercase; color: #b9bbbe; margin-bottom: 5px; }
-.friend { padding: 5px; border-radius: 5px; margin-bottom: 5px; }
+.friend { padding: 5px; border-radius: 5px; margin-bottom: 5px; cursor: pointer; }
 .friend.online { background: #43b581; }
 .friend.offline { background: #747f8d; }
+
+/* Account Modal */
+.account-modal {
+  display: none; /* hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.account-card {
+  background: #2f3136;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  width: 250px;
+  color: #fff;
+  position: relative;
+}
+.close-btn {
+  position: absolute;
+  top: 10px; right: 10px;
+  cursor: pointer;
+  font-size: 20px;
+}
+.avatar-large {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+.username { font-weight: bold; font-size: 18px; }
+.status { color: #b9bbbe; margin-bottom: 15px; }
+.actions button {
+  padding: 5px 10px;
+  margin: 5px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.message-btn { background: #5865f2; color: white; }
+.friend-btn { background: #43b581; color: white; }
