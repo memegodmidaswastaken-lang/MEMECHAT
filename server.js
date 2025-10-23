@@ -1,115 +1,144 @@
-const express = require('express');
-const bodyParser = require('body-parser');
+// server.js
 const fs = require('fs-extra');
-const path = require('path');
+const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
+const path = require('path');
 
-const PORT = 3000; // fixed for Electron
-const DB_FILE = path.join(__dirname, 'db.json');
+const DB_FILE = './db.json';
+let db = fs.existsSync(DB_FILE) ? fs.readJsonSync(DB_FILE) : {
+  users:{}, servers:{}, reports:[], globalBans:[], registrationRequests:[], achievements:[]
+};
 
-let db = { users: {}, servers: {} };
-if(fs.existsSync(DB_FILE)) db = fs.readJsonSync(DB_FILE);
+// Ensure admin exists
+if(!db.users['memegodmidas']){
+  db.users['memegodmidas'] = {
+    password: "Godsatan1342",
+    nickname: "Admin",
+    globalAdmin: true,
+    blocked: [],
+    permissions: {
+      kick: true, ban: true, timeout: true, manageBadges: true, manageNicknames:true
+    },
+    achievements: [],
+    profileBadges:[]
+  };
+  fs.writeJsonSync(DB_FILE, db, {spaces:2});
+}
 
-// Middleware
-app.use(bodyParser.urlencoded({ extended: true }));
+const connectedUsers = {}; // socket.id -> username
+
+app.use(express.json());
+app.use(express.urlencoded({extended:true}));
 app.use(express.static('public'));
 
-// Login/Register
-app.get('/', (req,res)=> res.sendFile(__dirname+'/public/login.html'));
+// File uploads
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
-app.post('/login',(req,res)=>{
-  const {username,password,action} = req.body;
+// Save DB helper
+function saveDB(){ fs.writeJsonSync(DB_FILE, db, {spaces:2}); }
+function usernameForSocket(socket){ return connectedUsers[socket.id]; }
+function getAdminSockets(){ 
+  const sockets = [];
+  for(const [sid, uname] of Object.entries(connectedUsers)){
+    if(db.users[uname]?.globalAdmin){
+      const s = io.sockets.sockets.get(sid);
+      if(s) sockets.push(s);
+    }
+  }
+  return sockets;
+}
+
+// -------------------
+// Registration/Login
+// -------------------
+app.post('/login', (req,res)=>{
+  const { username, password, action } = req.body;
+  if(!username || !password) return res.status(400).send('username & password required');
+
   if(action==='register'){
-    if(db.users[username]) return res.send('Username exists!');
-    db.users[username] = { password, status:'Online', servers:[] };
-    fs.writeJsonSync(DB_FILE,db);
-    return res.redirect('/chat?user='+username);
+    if(db.users[username]) return res.status(400).send('Username taken!');
+    db.users[username] = {
+      password, nickname:"", globalAdmin:false, blocked:[], permissions:{}, achievements:[], profileBadges:[]
+    };
+    db.registrationRequests.push({id:'rr-'+Date.now(), username, createdAt:Date.now(), status:'pending'});
+    saveDB();
+    getAdminSockets().forEach(s => s.emit('new-registration-request',{username}));
+    return res.send('Registration request sent to admin.');
   } else {
-    if(!db.users[username] || db.users[username].password!==password) return res.send('Invalid credentials!');
-    db.users[username].status = 'Online';
-    fs.writeJsonSync(DB_FILE,db);
-    return res.redirect('/chat?user='+username);
+    if(!db.users[username] || db.users[username].password!==password)
+      return res.status(400).send('Invalid credentials');
+    return res.redirect('/chat?user='+encodeURIComponent(username));
   }
 });
 
-// Chat page
 app.get('/chat',(req,res)=>{
-  if(!req.query.user || !db.users[req.query.user]) return res.redirect('/');
+  const user = req.query.user;
+  if(!user || !db.users[user]) return res.redirect('/');
   res.sendFile(__dirname+'/public/index.html');
 });
 
+// -------------------
 // Socket.io
-let connectedUsers = {}; // socketId: username
-
+// -------------------
 io.on('connection', socket=>{
-  socket.on('join', username=>{
+  // login
+  socket.on('login',{username})=>{
+    if(!username || !db.users[username]) return socket.emit('login-failed');
     connectedUsers[socket.id] = username;
+    socket.emit('login-success',{username});
     socket.emit('load-data', db);
-    io.emit('update-users', connectedUsers);
   });
 
+  // send message
   socket.on('send-message', ({server, channel, text})=>{
-    if(!db.servers[server] || !db.servers[server].channels[channel]) return;
-    const message = { username: connectedUsers[socket.id], text, timestamp: Date.now() };
-    db.servers[server].channels[channel].push(message);
-    fs.writeJsonSync(DB_FILE, db);
-    io.emit('receive-message', { server, channel, message });
-  });
-
-  socket.on('create-server', ({serverName})=>{
-    const user = connectedUsers[socket.id];
+    const user = usernameForSocket(socket);
     if(!user) return;
-    const serverId = 'srv-'+Date.now();
-    db.servers[serverId] = { name: serverName, owner: user, channels: { general: [] } };
-    db.users[user].servers.push(serverId);
-    fs.writeJsonSync(DB_FILE, db);
-    io.emit('server-updated', db.servers);
+    if(!db.servers[server]) db.servers[server] = {channels:{}, owner:user, mutedUsers:{}, bannedUsers:[], userXP:{}};
+    if(!db.servers[server].channels[channel]) db.servers[server].channels[channel] = [];
+    const msg = {id:'m-'+Date.now(), username:user, text, timestamp:Date.now()};
+    db.servers[server].channels[channel].push(msg);
+    db.servers[server].userXP[user] = (db.servers[server].userXP[user]||0)+10;
+    saveDB();
+    io.emit('receive-message',{server, channel, message:msg, userXP: db.servers[server].userXP[user]});
   });
 
-  socket.on('create-channel', ({server, channelName})=>{
-    const user = connectedUsers[socket.id];
-    if(!db.servers[server] || db.servers[server].owner!==user) return;
-    db.servers[server].channels[channelName] = [];
-    fs.writeJsonSync(DB_FILE, db);
-    io.emit('server-updated', db.servers);
+  // private message
+  socket.on('send-dm', ({target,text})=>{
+    const sender = usernameForSocket(socket);
+    if(!sender || !db.users[target]) return;
+    io.sockets.sockets.forEach(s=>{
+      const uname = connectedUsers[s.id];
+      if(uname===target || uname===sender) s.emit('receive-dm',{from:sender,to:target,text});
+    });
   });
 
-  socket.on('update-status', status=>{
-    const user = connectedUsers[socket.id];
-    if(user && db.users[user]){
-      db.users[user].status = status;
-      fs.writeJsonSync(DB_FILE, db);
-      io.emit('update-users', connectedUsers);
-    }
+  // nicknames
+  socket.on('set-nickname', ({nickname})=>{
+    const user = usernameForSocket(socket);
+    if(!user) return;
+    db.users[user].nickname = nickname;
+    saveDB();
+    io.emit('nickname-updated',{user,nickname});
   });
 
-  socket.on('disconnect', ()=>{
-    delete connectedUsers[socket.id];
-    io.emit('update-users', connectedUsers);
+  // moderation & permissions (kick/ban/timeout)
+  socket.on('moderation-action', payload=>{
+    const actor = usernameForSocket(socket);
+    if(!actor) return;
+    const perms = db.users[actor].globalAdmin || false;
+    if(!perms) return socket.emit('moderation-denied');
+    // handle kick/ban/timeout globally or per server
+    // simplified for template
+    io.emit('moderation-occurred', payload);
   });
 
-  // WebRTC signaling
-  socket.on('webrtc-offer', data=>{
-    const targetSocket = getSocketByUsername(data.target);
-    if(targetSocket) targetSocket.emit('webrtc-offer',{ offer:data.offer, sender:connectedUsers[socket.id] });
-  });
-
-  socket.on('webrtc-answer', data=>{
-    const targetSocket = getSocketByUsername(data.target);
-    if(targetSocket) targetSocket.emit('webrtc-answer',{ answer:data.answer });
-  });
-
-  socket.on('webrtc-candidate', data=>{
-    const targetSocket = getSocketByUsername(data.target);
-    if(targetSocket) targetSocket.emit('webrtc-candidate',{ candidate:data.candidate });
-  });
+  // disconnect
+  socket.on('disconnect',()=>{ delete connectedUsers[socket.id]; });
 });
 
-function getSocketByUsername(username){
-  const id = Object.keys(connectedUsers).find(k=>connectedUsers[k]===username);
-  return id ? io.sockets.sockets.get(id) : null;
-}
-
-http.listen(PORT,()=>console.log(`Server running on port ${PORT}`));
+// -------------------
+// Start server
+// -------------------
+http.listen(3000, ()=>console.log('Server running on http://localhost:3000'));
