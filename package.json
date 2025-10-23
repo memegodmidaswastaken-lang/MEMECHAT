@@ -1,20 +1,14 @@
 {
-  "name": "discord-clone",
+  "name": "discord-vencord-clone",
   "version": "1.0.0",
-  "main": "main.js",
+  "description": "Discord + Vencord Clone Template",
+  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "electron": "electron .",
-    "build-win": "electron-packager . DiscordClone --platform=win32 --arch=x64 --out=dist --overwrite"
+    "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.18.2",
     "socket.io": "^4.7.2",
-    "body-parser": "^1.20.2",
     "fs-extra": "^11.1.1"
-  },
-  "devDependencies": {
-    "electron": "^26.1.2",
-    "electron-packager": "^17.1.0"
   }
 }
